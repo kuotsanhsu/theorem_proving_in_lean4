@@ -1,6 +1,8 @@
+/-
 Prove the following identities, replacing the "sorry" placeholders with actual proofs.
+-/
 
-```lean
+section
 variable (p q r : Prop)
 
 -- commutativity of ∧ and ∨
@@ -27,12 +29,14 @@ example : (¬p ∨ q) → (p → q) := sorry
 example : p ∨ False ↔ p := sorry
 example : p ∧ False ↔ False := sorry
 example : (p → q) → (¬q → ¬p) := sorry
-```
+end
 
+/-
 Prove the following identities, replacing the "sorry" placeholders
 with actual proofs. These require classical reasoning.
+-/
 
-```lean
+section
 open Classical
 
 variable (p q r : Prop)
@@ -44,6 +48,9 @@ example : (p → q) → (¬p ∨ q) := sorry
 example : (¬q → ¬p) → (p → q) := sorry
 example : p ∨ ¬p := sorry
 example : (((p → q) → p) → p) := sorry
-```
+end
 
+/-
 Prove ``¬(p ↔ ¬p)`` without using classical logic.
+-/
+example : ¬(p ↔ ¬p) := sorry
