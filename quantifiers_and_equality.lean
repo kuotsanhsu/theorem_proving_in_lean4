@@ -11,19 +11,32 @@ open Classical
 variable (α : Type) (p q : α → Prop)
 variable (r : Prop)
 
-example : (∃ x : α, r) → r := sorry
-example (a : α) : r → (∃ x : α, r) := sorry
-example : (∃ x, p x ∧ r) ↔ (∃ x, p x) ∧ r := sorry
-example : (∃ x, p x ∨ q x) ↔ (∃ x, p x) ∨ (∃ x, q x) := sorry
+example : (∃ x : α, r) → r := fun ⟨_, hr⟩ => hr
+example (a : α) : r → (∃ x : α, r) := (⟨a, ·⟩)
+example : (∃ x, p x ∧ r) ↔ (∃ x, p x) ∧ r :=
+  ⟨fun ⟨x, h, hr⟩ => ⟨⟨x, h⟩, hr⟩, fun ⟨⟨x, h⟩, hr⟩ => ⟨x, h, hr⟩⟩
+example : (∃ x, p x ∨ q x) ↔ (∃ x, p x) ∨ (∃ x, q x) :=
+  ⟨fun ⟨x, h⟩ => h.rec (.inl ⟨x, ·⟩) (.inr ⟨x, ·⟩),
+    Or.rec (fun ⟨x, h⟩ => ⟨x, .inl h⟩) (fun ⟨x, h⟩ => ⟨x, .inr h⟩)⟩
 
-example : (∀ x, p x) ↔ ¬ (∃ x, ¬ p x) := sorry
-example : (∃ x, p x) ↔ ¬ (∀ x, ¬ p x) := sorry
-example : (¬ ∃ x, p x) ↔ (∀ x, ¬ p x) := sorry
-example : (¬ ∀ x, p x) ↔ (∃ x, ¬ p x) := sorry
+example : (∀ x, p x) ↔ ¬ (∃ x, ¬ p x) :=
+  ⟨fun h ⟨x, k⟩ => k (h x), (byContradiction fun k => · ⟨·, k⟩)⟩
+example : (∃ x, p x) ↔ ¬ (∀ x, ¬ p x) :=
+  ⟨fun ⟨x, h⟩ k => k x h, (byContradiction fun k => · (k ⟨·, ·⟩))⟩
+example : (¬ ∃ x, p x) ↔ (∀ x, ¬ p x) :=
+  ⟨(· ⟨·, ·⟩), fun h ⟨x, k⟩ => h x k⟩
+example : (¬ ∀ x, p x) ↔ (∃ x, ¬ p x) := Iff.symm
+  ⟨fun ⟨x, h⟩ k => h (k x), fun h => byContradiction fun k =>
+    h fun x => byContradiction (k ⟨x, ·⟩)⟩
 
-example : (∀ x, p x → r) ↔ (∃ x, p x) → r := sorry
-example (a : α) : (∃ x, p x → r) ↔ (∀ x, p x) → r := sorry
-example (a : α) : (∃ x, r → p x) ↔ (r → ∃ x, p x) := sorry
+example : (∀ x, p x → r) ↔ (∃ x, p x) → r :=
+  ⟨fun h ⟨x, k⟩ => h x k, (· ⟨·, ·⟩)⟩
+example (a : α) : (∃ x, p x → r) ↔ (∀ x, p x) → r :=
+  ⟨fun ⟨x, h⟩ k => h (k x), fun h => byContradiction fun k =>
+    k ⟨a, fun _ => h fun x => byContradiction (k ⟨x, False.rec ∘ ·⟩)⟩⟩
+example (a : α) : (∃ x, r → p x) ↔ (r → ∃ x, p x) :=
+  ⟨fun ⟨x, h⟩ k => ⟨x, h k⟩,
+    fun h => byCases (fun ⟨x, k⟩ => ⟨x, fun _ => k⟩) (⟨a, False.rec ∘ · ∘ h⟩)⟩
 end
 
 /-
@@ -33,9 +46,10 @@ end
 section
 variable (α : Type) (p q : α → Prop)
 
-example : (∀ x, p x ∧ q x) ↔ (∀ x, p x) ∧ (∀ x, q x) := sorry
-example : (∀ x, p x → q x) → (∀ x, p x) → (∀ x, q x) := sorry
-example : (∀ x, p x) ∨ (∀ x, q x) → ∀ x, p x ∨ q x := sorry
+example : (∀ x, p x ∧ q x) ↔ (∀ x, p x) ∧ (∀ x, q x) :=
+  ⟨fun h => ⟨fun x => (h x).1, fun x => (h x).2⟩, fun h x => ⟨h.1 x, h.2 x⟩⟩
+example : (∀ x, p x → q x) → (∀ x, p x) → (∀ x, q x) := fun h k x => h x (k x)
+example : (∀ x, p x) ∨ (∀ x, q x) → ∀ x, p x ∨ q x := Or.rec (.inl <| · ·) (.inr <| · ·)
 end
 
 /-
@@ -51,9 +65,11 @@ section
 variable (α : Type) (p q : α → Prop)
 variable (r : Prop)
 
-example : α → ((∀ x : α, r) ↔ r) := sorry
-example : (∀ x, p x ∨ r) ↔ (∀ x, p x) ∨ r := sorry
-example : (∀ x, r → p x) ↔ (r → ∀ x, p x) := sorry
+example : α → ((∀ x : α, r) ↔ r) := (⟨letFun ·, (fun _ => ·)⟩)
+example : (∀ x, p x ∨ r) ↔ (∀ x, p x) ∨ r :=
+  ⟨fun h => Classical.byCases .inr fun k => .inl (Or.rec id (absurd · k) <| h ·),
+    fun h x => h.rec (.inl <| · x) .inr⟩
+example : (∀ x, r → p x) ↔ (r → ∀ x, p x) := ⟨(fun x => · x ·), (fun hr => · hr ·)⟩
 end
 
 /-
@@ -66,7 +82,8 @@ section
 variable (men : Type) (barber : men)
 variable (shaves : men → men → Prop)
 
-example (h : ∀ x : men, shaves barber x ↔ ¬ shaves x x) : False := sorry
+example (h : ∀ x : men, shaves barber x ↔ ¬ shaves x x) : False :=
+  (h barber).rec (have (h) := · h h ; this <| · this)
 end
 
 /-
@@ -82,21 +99,26 @@ end
 -/
 
 section
-def even (n : Nat) : Prop := sorry
+def even (n : Nat) : Prop := ∃ m : Nat, m + m = n
 
-def prime (n : Nat) : Prop := sorry
+def prime (n : Nat) : Prop := ∀ m k : Nat, m * k = n → m = 1 ∨ k = 1
 
-def infinitely_many_primes : Prop := sorry
+private def inifinitely_many (h : Nat → Prop) : Prop := ∀ n : Nat, ∃ p : Subtype h, n ≤ p
 
-def Fermat_prime (n : Nat) : Prop := sorry
+def infinitely_many_primes : Prop := inifinitely_many prime
 
-def infinitely_many_Fermat_primes : Prop := sorry
+def Fermat_prime (n : Nat) : Prop := prime n ∧ ∃ m : Nat, 2^2^m + 1 = n
 
-def goldbach_conjecture : Prop := sorry
+def infinitely_many_Fermat_primes : Prop := inifinitely_many Fermat_prime
 
-def Goldbach's_weak_conjecture : Prop := sorry
+def goldbach_conjecture : Prop :=
+  ∀ n : Nat, even n ∧ 2 < n → ∃ a b : Subtype prime, a + b = n
 
-def Fermat's_last_theorem : Prop := sorry
+def Goldbach's_weak_conjecture : Prop :=
+  ∀ n : Nat, ¬even n ∧ 5 < n → ∃ a b c : Subtype prime, a + b + c = n
+
+def Fermat's_last_theorem : Prop :=
+  ∀ n : Nat, 2 < n → ¬∃ a b c : Nat, 0 < a ∧ 0 < b ∧ 0 < c ∧ a^n + b^n = c^n
 end
 
 /-
