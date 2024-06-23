@@ -39,6 +39,10 @@ The ``map`` function is even more tedious to define by hand than the
    This is tricky; you will have to define an auxiliary function.
 -/
 
+def Vector.append : Vector α m → Vector α n → Vector α (m + n)
+  | nil, ys => Nat.zero_add .. ▸ ys
+  | cons x xs, ys => Nat.succ_add .. ▸ cons x (xs.append ys)
+
 /-
 5. Consider the following type of arithmetic expressions. The idea is
    that ``var n`` is a variable, ``vₙ``, and ``const n`` is the
@@ -64,10 +68,10 @@ Write a function that evaluates such an expression, evaluating each ``var n`` to
 -/
 
 def eval (v : Nat → Nat) : Expr → Nat
-  | const n     => sorry
+  | const n     => n
   | var n       => v n
-  | plus e₁ e₂  => sorry
-  | times e₁ e₂ => sorry
+  | plus e₁ e₂  => eval v e₁ + eval v e₂
+  | times e₁ e₂ => eval v e₁ * eval v e₂
 
 def sampleVal : Nat → Nat
   | 0 => 5
@@ -90,15 +94,24 @@ def simpConst : Expr → Expr
   | times (const n₁) (const n₂) => const (n₁ * n₂)
   | e                           => e
 
-def fuse : Expr → Expr := sorry
+def fuse : Expr → Expr :=
+  fun
+  | e@(const _) | e@(var _) => e
+  | plus e₁ e₂  => simpConst (plus (fuse e₁) (fuse e₂))
+  | times e₁ e₂ => simpConst (times (fuse e₁) (fuse e₂))
 
 theorem simpConst_eq (v : Nat → Nat)
         : ∀ e : Expr, eval v (simpConst e) = eval v e :=
-  sorry
+  fun
+  | plus .. | times .. => by
+    unfold simpConst ; split ; repeat (first | simp only [*] | trivial)
+  | const .. | var .. => rfl
 
 theorem fuse_eq (v : Nat → Nat)
         : ∀ e : Expr, eval v (fuse e) = eval v e :=
-  sorry
+  fun
+  | plus .. | times .. => by simp only [fuse, simpConst_eq, eval, fuse_eq]
+  | const .. | var .. => rfl
 
 /-
 The last two theorems show that the definitions preserve the value.
