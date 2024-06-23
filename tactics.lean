@@ -12,45 +12,59 @@ variable (p q r : Prop)
 
 -- commutativity of ∧ and ∨
 example : p ∧ q ↔ q ∧ p := by
-  admit
+  constructor <;> intro ⟨h, k⟩ ; solve_by_elim*
 example : p ∨ q ↔ q ∨ p := by
-  admit
+  constructor <;> intro h <;> cases h ; solve_by_elim* [Or.inr]
 
 -- associativity of ∧ and ∨
 example : (p ∧ q) ∧ r ↔ p ∧ (q ∧ r) := by
-  admit
+  constructor
+  . intro ⟨⟨hp, hq⟩, hr⟩ ; solve_by_elim
+  . intro ⟨hp, hq, hr⟩ ; solve_by_elim
 example : (p ∨ q) ∨ r ↔ p ∨ (q ∨ r) := by
-  admit
+  constructor
+  . intro | .inl (.inl _) | .inl (.inr _) | .inr _ => solve_by_elim [Or.inr]
+  . intro | .inl _ | .inr (.inl _) | .inr (.inr _) => solve_by_elim [Or.inr]
 
 -- distributivity
 example : p ∧ (q ∨ r) ↔ (p ∧ q) ∨ (p ∧ r) := by
-  admit
+  constructor
+  . intro ⟨hp, h⟩ ; cases h ; solve_by_elim* [Or.inr]
+  . intro | .inl h | .inr h => cases h ; solve_by_elim [Or.inr]
 example : p ∨ (q ∧ r) ↔ (p ∨ q) ∧ (p ∨ r) := by
-  admit
+  constructor
+  . intro | .inl _ | .inr ⟨_, _⟩ => solve_by_elim [Or.inr]
+  . intro ⟨h, k⟩ ; cases h <;> cases k ; solve_by_elim* [Or.inr]
 
 -- other properties
 example : (p → (q → r)) ↔ (p ∧ q → r) := by
-  admit
+  constructor
+  . intro _ ⟨_, _⟩ ; solve_by_elim
+  . intros ; solve_by_elim
 example : ((p ∨ q) → r) ↔ (p → r) ∧ (q → r) := by
-  admit
+  constructor
+  . intros ; constructor ; solve_by_elim* [Or.inr]
+  . intro ⟨_, _⟩ h ; cases h ; solve_by_elim*
 example : ¬(p ∨ q) ↔ ¬p ∧ ¬q := by
-  admit
+  constructor
+  . intros ; constructor ; solve_by_elim* [Or.inr]
+  . intro ⟨_, _⟩ h ; cases h <;> contradiction
 example : ¬p ∨ ¬q → ¬(p ∧ q) := by
-  admit
+  intro h ⟨_, _⟩ ; cases h <;> contradiction
 example : ¬(p ∧ ¬p) := by
-  admit
+  intro ⟨_, _⟩ ; contradiction
 example : p ∧ ¬q → ¬(p → q) := by
-  admit
+  intro ⟨_, _⟩ _ ; solve_by_elim
 example : ¬p → (p → q) := by
-  admit
+  intro _ _ ; contradiction
 example : (¬p ∨ q) → (p → q) := by
-  admit
+  intro h _ ; cases h <;> solve_by_elim
 example : p ∨ False ↔ p := by
-  admit
+  simp
 example : p ∧ False ↔ False := by
-  admit
+  simp
 example : (p → q) → (¬q → ¬p) := by
-  admit
+  intro h hnq hp ; solve_by_elim
 end
 
 section
@@ -59,26 +73,36 @@ open Classical
 variable (p q r : Prop)
 
 example : (p → q ∨ r) → ((p → q) ∨ (p → r)) := by
-  admit
+  intro h ; by_cases q
+  case pos hq => left ; solve_by_elim
+  case neg hnq => right ; intro hp ; cases h hp <;> solve_by_elim
 example : ¬(p ∧ q) → ¬p ∨ ¬q := by
-  admit
+  intro h ; by_cases p
+  case neg => solve_by_elim
+  case pos hp => right ; intro ; apply h ; solve_by_elim
 example : ¬(p → q) → p ∧ ¬q := by
-  admit
+  intro h ; by_cases p <;> constructor <;> try solve_by_elim
+  . exfalso ; apply h ; intro ; contradiction
 example : (p → q) → (¬p ∨ q) := by
-  admit
+  intro h ; by_cases p
+  . right ; solve_by_elim
+  . left ; assumption
 example : (¬q → ¬p) → (p → q) := by
-  admit
+  intro h hp ; false_or_by_contra ; solve_by_elim
 example : p ∨ ¬p := by
-  admit
+  exact em p
 example : (((p → q) → p) → p) := by
-  admit
+  intro h ; by_cases p
+  . assumption
+  . apply h ; intro ; contradiction
 end
 
 /-
 Prove ``¬(p ↔ ¬p)`` without using classical logic.
 -/
 example : ¬(p ↔ ¬p) := by
-  admit
+  intro h ; cases h ; suffices ¬p by solve_by_elim
+  solve_by_elim
 end propositions_and_proofs
 
 section quantifiers_and_equality
@@ -89,40 +113,78 @@ variable (α : Type) (p q : α → Prop)
 variable (r : Prop)
 
 example : (∃ x : α, r) → r := by
-  admit
+  intro ⟨x, hr⟩ ; exact hr
 example (a : α) : r → (∃ x : α, r) := by
-  admit
+  solve_by_elim
 example : (∃ x, p x ∧ r) ↔ (∃ x, p x) ∧ r := by
-  admit
+  constructor
+  case mp => intro ⟨x, hpx, hr⟩ ; solve_by_elim
+  case mpr => intro ⟨⟨x, hpx⟩, hr⟩ ; solve_by_elim
 example : (∃ x, p x ∨ q x) ↔ (∃ x, p x) ∨ (∃ x, q x) := by
-  admit
+  constructor
+  case mp => intro
+    | ⟨x, .inl hp⟩ => solve_by_elim
+    | ⟨x, .inr hq⟩ => right ; solve_by_elim
+  case mpr => intro
+    | .inl ⟨x, hp⟩ => solve_by_elim
+    | .inr ⟨x, hq⟩ => constructor ; right ; exact hq
 
 example : (∀ x, p x) ↔ ¬ (∃ x, ¬ p x) := by
-  admit
+  constructor
+  case mp => intro h ⟨x, k⟩ ; solve_by_elim
+  case mpr => intro h x ; false_or_by_contra ; solve_by_elim
 example : (∃ x, p x) ↔ ¬ (∀ x, ¬ p x) := by
-  admit
+  constructor
+  case mp => intro ⟨x, h⟩ k ; solve_by_elim
+  case mpr => intro h ; false_or_by_contra ; apply h ; intro x h ; solve_by_elim
 example : (¬ ∃ x, p x) ↔ (∀ x, ¬ p x) := by
-  admit
+  constructor
+  case mp => intro h x ; solve_by_elim
+  case mpr => intro h ⟨x, k⟩ ; solve_by_elim
 example : (¬ ∀ x, p x) ↔ (∃ x, ¬ p x) := by
-  admit
+  constructor
+  case mpr => intro ⟨x, h⟩ k ; solve_by_elim
+  case mp =>
+    intro h ; false_or_by_contra ; apply h
+    intro x ; false_or_by_contra ; solve_by_elim
 
 example : (∀ x, p x → r) ↔ (∃ x, p x) → r := by
-  admit
+  constructor
+  case mp => intro h ⟨x, k⟩ ; solve_by_elim
+  case mpr => intro h x k ; solve_by_elim
 example (a : α) : (∃ x, p x → r) ↔ (∀ x, p x) → r := by
-  admit
+  constructor
+  case mp => intro ⟨x, h⟩ k ; solve_by_elim
+  case mpr =>
+    intro h ; false_or_by_contra ; apply_assumption ; apply Exists.intro a
+    intro ; apply h
+    intro x ; false_or_by_contra ; apply_assumption ; apply Exists.intro x
+    intro ; contradiction
 example (a : α) : (∃ x, r → p x) ↔ (r → ∃ x, p x) := by
-  admit
+  constructor
+  case mp => intro ⟨x, h⟩ hr ; solve_by_elim
+  case mpr =>
+    intro h ; by_cases ∃ x, p x
+    case pos k => cases k ; solve_by_elim
+    case neg k' => apply Exists.intro a ; intro hr ; solve_by_elim
 end
 
 section
 variable (α : Type) (p q : α → Prop)
 
 example : (∀ x, p x ∧ q x) ↔ (∀ x, p x) ∧ (∀ x, q x) := by
-  admit
+  constructor
+  case mpr => intro ⟨hp, hq⟩ x ; solve_by_elim
+  case mp =>
+    intro h ; constructor
+    case left => intro x ; apply And.left ; apply h
+    case right => intro x ; apply And.right ; apply h
 example : (∀ x, p x → q x) → (∀ x, p x) → (∀ x, q x) := by
-  admit
+  intro h hp x ; solve_by_elim
 example : (∀ x, p x) ∨ (∀ x, q x) → ∀ x, p x ∨ q x := by
-  admit
+  intro
+  | .inl hp, x => left ; apply hp
+  | .inr hq, x => right ; apply hq
 end
 
 section
@@ -130,11 +192,20 @@ variable (α : Type) (p q : α → Prop)
 variable (r : Prop)
 
 example : α → ((∀ x : α, r) ↔ r) := by
-  admit
+  intro a ; constructor <;> solve_by_elim
 example : (∀ x, p x ∨ r) ↔ (∀ x, p x) ∨ r := by
-  admit
+  constructor
+  case mpr => intro
+    | .inl h, _ => left ; apply h
+    | .inr hr, _ => right ; exact hr
+  case mp =>
+    intro h ; by_cases r
+    case pos hr => right ; exact hr
+    case neg => left ; intro x ; cases h x <;> solve_by_elim
 example : (∀ x, r → p x) ↔ (r → ∀ x, p x) := by
-  admit
+  constructor
+  case mp => intro h hr x ; solve_by_elim
+  case mpr => intro h x hr ; solve_by_elim
 end
 
 section
@@ -142,7 +213,9 @@ variable (men : Type) (barber : men)
 variable (shaves : men → men → Prop)
 
 example (h : ∀ x : men, shaves barber x ↔ ¬ shaves x x) : False := by
-  admit
+  cases h barber
+  suffices shaves barber barber by solve_by_elim
+  solve_by_elim
 end
 end quantifiers_and_equality
 
@@ -152,4 +225,4 @@ end quantifiers_and_equality
 
 example (p q r : Prop) (hp : p)
         : (p ∨ q ∨ r) ∧ (q ∨ p ∨ r) ∧ (q ∨ r ∨ p) := by
-  admit
+  and_intros ; repeat (first | left ; assumption | right | assumption)
