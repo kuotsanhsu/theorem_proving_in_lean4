@@ -47,7 +47,7 @@ example : ¬p → (p → q) := Function.comp False.rec
 example : (¬p ∨ q) → (p → q) := fun h k => h.rec (absurd k) id
 example : p ∨ False ↔ p := ⟨Or.rec id False.rec, .inl⟩
 example : p ∧ False ↔ False := ⟨And.right, False.rec⟩
-example : (p → q) → (¬q → ¬p) := fun h => (· ∘ h)
+example : (p → q) → (¬q → ¬p) := flip (· ∘ ·)
 end
 
 /-
